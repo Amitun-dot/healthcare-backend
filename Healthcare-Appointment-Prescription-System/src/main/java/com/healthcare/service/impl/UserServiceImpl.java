@@ -31,12 +31,12 @@ public class UserServiceImpl implements UserService {
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(user -> new UserResponse(
-                        user.getId(),
-                        user.getName(),
-                        user.getEmail(),
-                        user.getRole().name()
-                ))
+                .map(user -> UserResponse.builder()
+                        .id(user.getId())
+                        .name(user.getName())
+                        .email(user.getEmail())
+                        .role(user.getRole().name())
+                        .build())
                 .toList();
     }
 
@@ -50,13 +50,8 @@ public class UserServiceImpl implements UserService {
             Patient patient = patientRepository.findByUserId(userId)
                     .orElseThrow(() -> new RuntimeException("Patient profile not found"));
 
-            // 1. delete prescriptions linked to patient
             prescriptionRepository.deleteAll(prescriptionRepository.findByPatient(patient));
-
-            // 2. delete appointments linked to patient
             appointmentRepository.deleteAll(appointmentRepository.findByPatient(patient));
-
-            // 3. delete patient profile
             patientRepository.delete(patient);
         }
 
@@ -64,17 +59,11 @@ public class UserServiceImpl implements UserService {
             Doctor doctor = doctorRepository.findByUser(user)
                     .orElseThrow(() -> new RuntimeException("Doctor profile not found"));
 
-            // 1. delete prescriptions linked to doctor
             prescriptionRepository.deleteAll(prescriptionRepository.findByDoctor(doctor));
-
-            // 2. delete appointments linked to doctor
             appointmentRepository.deleteAll(appointmentRepository.findByDoctor(doctor));
-
-            // 3. delete doctor profile
             doctorRepository.delete(doctor);
         }
 
-        // 4. delete user
         userRepository.delete(user);
     }
 }

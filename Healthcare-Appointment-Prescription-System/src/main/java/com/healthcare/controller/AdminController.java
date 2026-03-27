@@ -51,9 +51,45 @@ public class AdminController {
         return appointmentService.getAllAppointments();
     }
 
+    @PutMapping("/appointments/{appointmentId}/status")
+    public com.healthcare.entity.Appointment updateAppointmentStatus(
+            @PathVariable Long appointmentId,
+            @RequestBody UpdateAppointmentStatusRequest request) {
+        return appointmentService.updateAppointmentStatus(appointmentId, request);
+    }
+
+    @DeleteMapping("/appointments/{appointmentId}")
+    public String deleteAppointment(@PathVariable Long appointmentId) {
+        appointmentService.deleteAppointment(appointmentId);
+        return "Appointment deleted successfully";
+    }
+
     @GetMapping("/prescriptions")
     public List<PrescriptionResponse> getAllPrescriptions() {
         return prescriptionService.getAllPrescriptions();
+    }
+
+    @GetMapping("/users")
+    public List<UserResponse> getAllUsers() {
+        return userRepository.findAll()
+                .stream()
+                .map(user -> UserResponse.builder()
+                        .id(user.getId())
+                        .name(user.getName())
+                        .email(user.getEmail())
+                        .role(user.getRole().name())
+                        .build())
+                .toList();
+    }
+
+    @DeleteMapping("/users/{userId}")
+    public String deleteUser(@PathVariable Long userId) {
+        if (!userRepository.existsById(userId)) {
+            throw new RuntimeException("User not found");
+        }
+
+        userRepository.deleteById(userId);
+        return "User deleted successfully";
     }
 
     @PostMapping("/doctors")
