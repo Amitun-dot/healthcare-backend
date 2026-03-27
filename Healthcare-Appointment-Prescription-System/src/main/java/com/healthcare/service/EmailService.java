@@ -1,6 +1,5 @@
 package com.healthcare.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -9,15 +8,12 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Base64;
-import java.util.List;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class EmailService {
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Value("${brevo.api.key}")
     private String brevoApiKey;
@@ -29,6 +25,10 @@ public class EmailService {
     private String fromName;
 
     private static final String BREVO_SEND_EMAIL_URL = "https://api.brevo.com/v3/smtp/email";
+
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(10))
+            .build();
 
     public void sendPrescriptionEmail(String toEmail, String patientName, byte[] pdfBytes) {
         try {
@@ -50,43 +50,47 @@ public class EmailService {
                 throw new RuntimeException("Brevo API key is missing");
             }
 
+            String safePatientName = (patientName == null || patientName.isBlank()) ? "Patient" : patientName;
             String encodedPdf = Base64.getEncoder().encodeToString(pdfBytes);
 
-            Map<String, Object> payload = Map.of(
-                    "sender", Map.of(
-                            "name", fromName,
-                            "email", fromEmail
-                    ),
-                    "to", List.of(
-                            Map.of(
-                                    "email", toEmail,
-                                    "name", (patientName == null || patientName.isBlank()) ? "Patient" : patientName
-                            )
-                    ),
-                    "subject", "Your Prescription",
-                    "textContent",
-                    "Dear " + ((patientName == null || patientName.isBlank()) ? "Patient" : patientName) + ",\n\n" +
-                            "Your prescription has been attached in PDF format.\n\n" +
-                            "Regards,\nHealthcare Team",
-                    "attachment", List.of(
-                            Map.of(
-                                    "name", "prescription.pdf",
-                                    "content", encodedPdf
-                            )
-                    )
+            String requestBody = """
+                    {
+                      "sender": {
+                        "name": "%s",
+                        "email": "%s"
+                      },
+                      "to": [
+                        {
+                          "email": "%s",
+                          "name": "%s"
+                        }
+                      ],
+                      "subject": "Your Prescription",
+                      "textContent": "Dear %s,\\n\\nYour prescription has been attached in PDF format.\\n\\nRegards,\\nHealthcare Team",
+                      "attachment": [
+                        {
+                          "name": "prescription.pdf",
+                          "content": "%s"
+                        }
+                      ]
+                    }
+                    """.formatted(
+                    escapeJson(fromName),
+                    escapeJson(fromEmail),
+                    escapeJson(toEmail),
+                    escapeJson(safePatientName),
+                    escapeJson(safePatientName),
+                    encodedPdf
             );
-
-            String requestBody = objectMapper.writeValueAsString(payload);
 
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(BREVO_SEND_EMAIL_URL))
+                    .timeout(Duration.ofSeconds(20))
                     .header("accept", "application/json")
-                    .header("api-key", brevoApiKey)
+                    .header("api-key", brevoApiKey.trim())
                     .header("content-type", "application/json")
                     .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                     .build();
-
-            HttpClient httpClient = HttpClient.newHttpClient();
 
             HttpResponse<String> response = httpClient.send(
                     request,
@@ -109,5 +113,17 @@ public class EmailService {
             e.printStackTrace();
             throw new RuntimeException("Failed to send prescription email: " + e.getMessage(), e);
         }
+    }
+
+    private String escapeJson(String value) {
+        if (value == null) {
+            return "";
+        }
+
+        return value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "");
     }
 }
