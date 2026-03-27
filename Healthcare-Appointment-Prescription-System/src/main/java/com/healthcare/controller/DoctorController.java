@@ -20,7 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/doctor")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class DoctorController {
 
     private final DoctorRepository doctorRepository;
