@@ -6,7 +6,6 @@ import com.healthcare.dto.DoctorResponse;
 import com.healthcare.dto.PrescriptionResponse;
 import com.healthcare.dto.UpdateAppointmentStatusRequest;
 import com.healthcare.entity.Doctor;
-import com.healthcare.entity.Prescription;
 import com.healthcare.entity.User;
 import com.healthcare.repository.DoctorRepository;
 import com.healthcare.repository.UserRepository;
@@ -74,8 +73,21 @@ public class DoctorController {
     }
 
     @PostMapping("/prescriptions")
-    public Prescription createPrescription(@RequestBody CreatePrescriptionRequest request) {
-        return prescriptionService.createPrescription(request);
+    public PrescriptionResponse createPrescription(@RequestBody CreatePrescriptionRequest request) {
+        var prescription = prescriptionService.createPrescription(request);
+
+        return PrescriptionResponse.builder()
+                .id(prescription.getId())
+                .diagnosis(prescription.getDiagnosis())
+                .medicines(prescription.getMedicines())
+                .notes(prescription.getNotes())
+                .appointmentId(prescription.getAppointment().getId())
+                .appointmentDate(prescription.getAppointment().getAppointmentDate().toString())
+                .appointmentTime(prescription.getAppointment().getAppointmentTime().toString())
+                .status(prescription.getAppointment().getStatus().name())
+                .doctorName(prescription.getDoctor().getUser().getName())
+                .patientName(prescription.getPatient().getUser().getName())
+                .build();
     }
 
     @GetMapping("/prescriptions/{doctorId}")

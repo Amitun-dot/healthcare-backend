@@ -22,8 +22,25 @@ public class PrescriptionController {
     private final PrescriptionService prescriptionService;
 
     @PostMapping
-    public Prescription createPrescription(@Valid @RequestBody CreatePrescriptionRequest request) {
-        return prescriptionService.createPrescription(request);
+    public ResponseEntity<PrescriptionResponse> createPrescription(
+            @Valid @RequestBody CreatePrescriptionRequest request) {
+
+        Prescription prescription = prescriptionService.createPrescription(request);
+
+        PrescriptionResponse response = PrescriptionResponse.builder()
+                .id(prescription.getId())
+                .diagnosis(prescription.getDiagnosis())
+                .medicines(prescription.getMedicines())
+                .notes(prescription.getNotes())
+                .appointmentId(prescription.getAppointment().getId())
+                .appointmentDate(prescription.getAppointment().getAppointmentDate().toString())
+                .appointmentTime(prescription.getAppointment().getAppointmentTime().toString())
+                .status(prescription.getAppointment().getStatus().name())
+                .doctorName(prescription.getDoctor().getUser().getName())
+                .patientName(prescription.getPatient().getUser().getName())
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/patient/{patientId}")

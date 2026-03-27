@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -71,17 +72,14 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
         Prescription savedPrescription = prescriptionRepository.save(prescription);
 
-        try {
-            String patientEmail = savedPrescription.getPatient().getUser().getEmail();
-            String patientName = savedPrescription.getPatient().getUser().getName();
-
-            if (patientEmail != null && !patientEmail.isBlank()) {
-                byte[] pdfBytes = pdfService.generatePrescriptionPdf(savedPrescription);
-                emailService.sendPrescriptionEmail(patientEmail, patientName, pdfBytes);
+        // ✅ Run email sending in background so API response is fast
+        CompletableFuture.runAsync(() -> {
+            try {
+                sendPrescriptionEmail(savedPrescription.getId());
+            } catch (Exception e) {
+                System.out.println("Prescription saved, but email sending failed: " + e.getMessage());
             }
-        } catch (Exception e) {
-            System.out.println("Prescription saved, but email sending failed: " + e.getMessage());
-        }
+        });
 
         return savedPrescription;
     }
