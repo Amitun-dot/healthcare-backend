@@ -47,7 +47,7 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         if (user.getRole() == Role.PATIENT) {
-            Patient patient = patientRepository.findByUserId(userId)
+            Patient patient = patientRepository.findByUser(user)
                     .orElseThrow(() -> new RuntimeException("Patient profile not found"));
 
             prescriptionRepository.deleteAll(prescriptionRepository.findByPatient(patient));

@@ -7,8 +7,10 @@ import com.healthcare.dto.PatientResponse;
 import com.healthcare.dto.PrescriptionResponse;
 import com.healthcare.entity.Doctor;
 import com.healthcare.entity.Patient;
+import com.healthcare.entity.User;
 import com.healthcare.repository.DoctorRepository;
 import com.healthcare.repository.PatientRepository;
+import com.healthcare.repository.UserRepository;
 import com.healthcare.service.AppointmentService;
 import com.healthcare.service.PrescriptionService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ public class PatientController {
 
     private final PatientRepository patientRepository;
     private final DoctorRepository doctorRepository;
+    private final UserRepository userRepository;
     private final AppointmentService appointmentService;
     private final PrescriptionService prescriptionService;
 
@@ -45,7 +48,10 @@ public class PatientController {
 
     @GetMapping("/profile-by-user/{userId}")
     public PatientResponse getProfileByUserId(@PathVariable Long userId) {
-        Patient patient = patientRepository.findByUserId(userId)
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Patient patient = patientRepository.findByUser(user)
                 .orElseThrow(() -> new RuntimeException("Patient not found"));
 
         return PatientResponse.builder()
