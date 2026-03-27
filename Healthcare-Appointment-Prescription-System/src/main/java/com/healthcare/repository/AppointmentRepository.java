@@ -23,4 +23,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
             LocalTime appointmentTime,
             AppointmentStatus status
     );
+
+    // ✅ NEW: delete linked appointments for admin user delete flow
+    void deleteByDoctor(Doctor doctor);
+
+    void deleteByPatient(Patient patient);
 }

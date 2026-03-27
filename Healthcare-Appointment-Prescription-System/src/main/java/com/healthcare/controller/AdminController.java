@@ -5,11 +5,10 @@ import com.healthcare.entity.Doctor;
 import com.healthcare.entity.Patient;
 import com.healthcare.entity.Role;
 import com.healthcare.entity.User;
-import com.healthcare.repository.DoctorRepository;
-import com.healthcare.repository.PatientRepository;
-import com.healthcare.repository.UserRepository;
+import com.healthcare.repository.*;
 import com.healthcare.service.AppointmentService;
 import com.healthcare.service.PrescriptionService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -28,6 +27,10 @@ public class AdminController {
     private final PrescriptionService prescriptionService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    // 🔥 ADD THESE
+    private final AppointmentRepository appointmentRepository;
+    private final PrescriptionRepository prescriptionRepository;
 
     @GetMapping("/doctors")
     public List<DoctorResponse> getAllDoctors() {
@@ -81,13 +84,43 @@ public class AdminController {
                 .toList();
     }
 
+    // 🔥 FIXED DELETE (MAIN LOGIC)
     @DeleteMapping("/users/{userId}")
+    @Transactional
     public String deleteUser(@PathVariable Long userId) {
-        if (!userRepository.existsById(userId)) {
-            throw new RuntimeException("User not found");
-        }
 
-        userRepository.deleteById(userId);
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 👉 Handle DOCTOR
+        doctorRepository.findByUser(user).ifPresent(doctor -> {
+
+            // delete prescriptions first
+            prescriptionRepository.deleteByDoctor(doctor);
+
+            // delete appointments
+            appointmentRepository.deleteByDoctor(doctor);
+
+            // delete doctor
+            doctorRepository.delete(doctor);
+        });
+
+        // 👉 Handle PATIENT
+        patientRepository.findByUser(user).ifPresent(patient -> {
+
+            // delete prescriptions
+            prescriptionRepository.deleteByPatient(patient);
+
+            // delete appointments
+            appointmentRepository.deleteByPatient(patient);
+
+            // delete patient
+            patientRepository.delete(patient);
+        });
+
+        // 👉 Finally delete user
+        userRepository.delete(user);
+
         return "User deleted successfully";
     }
 

@@ -10,7 +10,17 @@ import java.util.List;
 import java.util.Optional;
 
 public interface PrescriptionRepository extends JpaRepository<Prescription, Long> {
+
     List<Prescription> findByPatient(Patient patient);
+
     List<Prescription> findByDoctor(Doctor doctor);
+
     Optional<Prescription> findByAppointment(Appointment appointment);
+
+    // ✅ NEW: required for admin delete flow
+    void deleteByDoctor(Doctor doctor);
+
+    void deleteByPatient(Patient patient);
+
+    void deleteByAppointment(Appointment appointment);
 }
