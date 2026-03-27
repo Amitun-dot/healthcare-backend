@@ -15,9 +15,14 @@ public class EmailService {
 
     public void sendPrescriptionEmail(String toEmail, String patientName, byte[] pdfBytes) {
         try {
+            System.out.println("Sending prescription email to: " + toEmail);
+            System.out.println("Patient name: " + patientName);
+            System.out.println("PDF size: " + (pdfBytes != null ? pdfBytes.length : 0));
+
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
+            helper.setFrom("yourmedicaree@gmail.com");
             helper.setTo(toEmail);
             helper.setSubject("Your Prescription");
             helper.setText(
@@ -29,8 +34,11 @@ public class EmailService {
             helper.addAttachment("prescription.pdf", new ByteArrayResource(pdfBytes));
 
             mailSender.send(message);
+
+            System.out.println("Prescription email sent successfully to: " + toEmail);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send prescription email", e);
+            e.printStackTrace();
+            throw new RuntimeException("Failed to send prescription email: " + e.getMessage(), e);
         }
     }
 }
