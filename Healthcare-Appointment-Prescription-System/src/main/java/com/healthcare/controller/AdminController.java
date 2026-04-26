@@ -179,7 +179,8 @@ public class AdminController {
             java.io.File destinationFile = new java.io.File(filePath);
             file.transferTo(destinationFile);
 
-            doctor.setSignatureUrl(filePath);
+            // ✅ Save absolute path for PDF usage
+            doctor.setSignatureUrl(destinationFile.getAbsolutePath());
             doctorRepository.save(doctor);
 
             return "Signature uploaded successfully";
