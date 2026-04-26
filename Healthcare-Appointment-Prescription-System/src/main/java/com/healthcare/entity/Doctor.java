@@ -33,6 +33,10 @@ public class Doctor {
     @Column(name = "available_to", nullable = false)
     private LocalTime availableTo;
 
+    // ✅ Doctor digital signature file path / URL
+    @Column(name = "signature_url")
+    private String signatureUrl;
+
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;

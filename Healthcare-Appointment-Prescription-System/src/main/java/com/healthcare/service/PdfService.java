@@ -1,19 +1,8 @@
 package com.healthcare.service;
 
 import com.healthcare.entity.Prescription;
-import com.lowagie.text.Chunk;
-import com.lowagie.text.Document;
-import com.lowagie.text.DocumentException;
-import com.lowagie.text.Element;
-import com.lowagie.text.Font;
-import com.lowagie.text.FontFactory;
-import com.lowagie.text.PageSize;
-import com.lowagie.text.Paragraph;
-import com.lowagie.text.Phrase;
-import com.lowagie.text.Rectangle;
-import com.lowagie.text.pdf.PdfPCell;
-import com.lowagie.text.pdf.PdfPTable;
-import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
 import org.springframework.stereotype.Service;
 
 import java.awt.Color;
@@ -117,6 +106,35 @@ public class PdfService {
             ));
 
             document.add(Chunk.NEWLINE);
+            document.add(Chunk.NEWLINE);
+
+            // ✅ ADD SIGNATURE SECTION
+            if (prescription.getDoctor().getSignatureUrl() != null) {
+                try {
+                    Image signature = Image.getInstance(prescription.getDoctor().getSignatureUrl());
+                    signature.scaleToFit(120, 60);
+                    signature.setAlignment(Element.ALIGN_RIGHT);
+
+                    document.add(signature);
+                } catch (Exception e) {
+                    // ignore if image not found
+                }
+            }
+
+            Paragraph doctorName = new Paragraph(
+                    "Dr. " + prescription.getDoctor().getUser().getName(),
+                    valueFont
+            );
+            doctorName.setAlignment(Element.ALIGN_RIGHT);
+            document.add(doctorName);
+
+            Paragraph doctorSpec = new Paragraph(
+                    prescription.getDoctor().getSpecialization(),
+                    valueFont
+            );
+            doctorSpec.setAlignment(Element.ALIGN_RIGHT);
+            document.add(doctorSpec);
+
             document.add(Chunk.NEWLINE);
 
             Paragraph footer = new Paragraph("Get well soon. Wishing you a healthy recovery.", footerFont);

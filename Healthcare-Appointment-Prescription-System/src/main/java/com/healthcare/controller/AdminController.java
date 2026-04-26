@@ -12,6 +12,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -152,6 +153,38 @@ public class AdminController {
         doctorRepository.save(doctor);
 
         return "Doctor created successfully";
+    }
+
+    // ✅ Upload doctor signature (ADMIN)
+    @PostMapping("/doctors/{doctorId}/signature")
+    public String uploadDoctorSignature(
+            @PathVariable Long doctorId,
+            @RequestParam("file") MultipartFile file
+    ) {
+        try {
+            Doctor doctor = doctorRepository.findById(doctorId)
+                    .orElseThrow(() -> new RuntimeException("Doctor not found"));
+
+            String uploadDir = "uploads/signatures/";
+            java.io.File dir = new java.io.File(uploadDir);
+
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            String fileName = "doctor_" + doctorId + "_" + System.currentTimeMillis() + ".png";
+            String filePath = uploadDir + fileName;
+
+            file.transferTo(new java.io.File(filePath));
+
+            doctor.setSignatureUrl(filePath);
+            doctorRepository.save(doctor);
+
+            return "Signature uploaded successfully";
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to upload signature: " + e.getMessage());
+        }
     }
 
     private DoctorResponse mapDoctorResponse(Doctor doctor) {
