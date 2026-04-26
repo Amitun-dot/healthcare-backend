@@ -165,9 +165,10 @@ public class AdminController {
             Doctor doctor = doctorRepository.findById(doctorId)
                     .orElseThrow(() -> new RuntimeException("Doctor not found"));
 
-            String uploadDir = "uploads/signatures/";
-            java.io.File dir = new java.io.File(uploadDir);
+            // ✅ Use system temp directory (works in deployment)
+            String uploadDir = System.getProperty("java.io.tmpdir") + "/uploads/signatures/";
 
+            java.io.File dir = new java.io.File(uploadDir);
             if (!dir.exists()) {
                 dir.mkdirs();
             }
@@ -175,7 +176,8 @@ public class AdminController {
             String fileName = "doctor_" + doctorId + "_" + System.currentTimeMillis() + ".png";
             String filePath = uploadDir + fileName;
 
-            file.transferTo(new java.io.File(filePath));
+            java.io.File destinationFile = new java.io.File(filePath);
+            file.transferTo(destinationFile);
 
             doctor.setSignatureUrl(filePath);
             doctorRepository.save(doctor);
