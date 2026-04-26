@@ -121,8 +121,16 @@ public class PdfService {
                 }
             }
 
+            String doctorFullName = prescription.getDoctor().getUser().getName();
+
+            String displayDoctorName =
+                    doctorFullName != null &&
+                            doctorFullName.trim().toLowerCase().startsWith("dr.")
+                            ? doctorFullName
+                            : "Dr. " + doctorFullName;
+
             Paragraph doctorName = new Paragraph(
-                    "Dr. " + prescription.getDoctor().getUser().getName(),
+                    displayDoctorName,
                     valueFont
             );
             doctorName.setAlignment(Element.ALIGN_RIGHT);
